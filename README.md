@@ -22,7 +22,9 @@ x += np.random.randn(len(t)) * 0.08
 
 Let's keep only what's below 15 Hz with a butterworth low-pass filter of order 4. Sharper cutoff can be obtained with higher orders. 
 Butterworth low-pass filters has frequency responses that look like that according to their order: 
+
 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Butterworth_Filter_Orders.svg/350px-Butterworth_Filter_Orders.svg.png" alt="Butterworth low-pass filter" style="width: 550px;" />
+
 Let's proceed and filter the data. 
 
 
@@ -174,5 +176,7 @@ https://www.youtube.com/playlist?list=PLlp-GWNOd6m6gSz0wIcpvl4ixSlS-HEmr
     [NbConvertApp] Support files will be in Filtering_files/
     [NbConvertApp] Making directory Filtering_files
     [NbConvertApp] Making directory Filtering_files
-    [NbConvertApp] Writing 4980 bytes to Filtering.md
+    [NbConvertApp] Making directory Filtering_files
+    [NbConvertApp] Making directory Filtering_files
+    [NbConvertApp] Writing 5425 bytes to Filtering.md
 

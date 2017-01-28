@@ -7,14 +7,22 @@ Let's start by generating data. Let's assume that we have a sampling rate of 50 
 ```python
 import numpy as np
 
-# Generate a random x(t) signal with waves and noise. 
 sample_rate = 50  # 50 Hz resolution
 signal_lenght = 10*sample_rate  # 10 seconds
-t = np.linspace(-1, 1, signal_lenght)
-x = np.sin(2*np.pi*0.75*t*(1-t) + 2.1) 
-x += 0.1*np.sin(2*np.pi*1.25*t + 1) 
-x += 0.18*np.cos(2*np.pi*3.85*t)
-x += np.random.randn(len(t)) * 0.08
+# Generate a random x(t) signal with waves and noise. 
+t = np.linspace(0, 10, signal_lenght)
+g = 30*( np.sin((t/10)**2) )
+x  = 0.30*np.cos(2*np.pi*0.25*t - 0.2) 
+x += 0.28*np.sin(2*np.pi*1.50*t + 1.0)
+x += 0.10*np.sin(2*np.pi*5.85*g + 1.0)
+x += 0.09*np.cos(2*np.pi*10.0*t)
+x += 0.04*np.sin(2*np.pi*20.0*t)
+x += 0.15*np.cos(2*np.pi*135.0*(t/5.0-1)**2)
+x += 0.04*np.random.randn(len(t))
+# Normalize between -0.5 to 0.5: 
+x -= np.min(x)
+x /= np.max(x)
+x -= 0.5
 
 ```
 
@@ -55,9 +63,9 @@ diff = np.array(x)-np.array(y)
 
 # Visualize
 plt.figure(figsize=(11, 9))
-plt.plot(x, color='gray', label="Original, {} samples".format(signal_lenght))
-plt.plot(y, color='blue', label="Filtered low-pass with cutoff frequency {}".format(cutoff_frequency))
-plt.plot(diff, color='red', label="What has been removed")
+plt.plot(x, color='red', label="Original signal, {} samples".format(signal_lenght))
+plt.plot(y, color='blue', label="Filtered low-pass with cutoff frequency of {} Hz".format(cutoff_frequency))
+plt.plot(diff, color='gray', label="What has been removed")
 plt.legend()
 plt.show()
 
@@ -69,21 +77,17 @@ plt.show()
 
 ## Plotting the spectrum with STFTs. 
 
-Note that if you don't have the library `spectrum`, you can use the [Hanning window](https://en.wikipedia.org/wiki/Window_function#Hann_.28Hanning.29_window) instead of the [Hann-Poisson](https://en.wikipedia.org/wiki/Window_function#Hann.E2.80.93Poisson_window). To do so in the code, switch the variable `w` to the commented value in the `stft` (and `istft`) functions. 
+Here, the [Hanning window](https://en.wikipedia.org/wiki/Window_function#Hann_.28Hanning.29_window) is used. 
 
 
 ```python
-import spectrum
 import scipy
 
 
 def stft(x, fftsize=1024, overlap=4):
     # Short-time Fourier transform
     hop = fftsize / overlap
-    
-    # w = scipy.hanning(fftsize+1)[:-1]      # better reconstruction with this trick +1)[:-1]  
-    w = spectrum.window_poisson_hanning(fftsize+1, alpha=2)[:-1]
-    
+    w = scipy.hanning(fftsize+1)[:-1]      # better reconstruction with this trick +1)[:-1]  
     return np.array([np.fft.rfft(w*x[i:i+fftsize]) for i in range(0, len(x)-fftsize, hop)])
 
 # Here we don't use the ISTFT but having the function may be useful to some, 
@@ -92,10 +96,7 @@ def stft(x, fftsize=1024, overlap=4):
 #     # Inverse Short-time Fourier transform
 #     fftsize=(X.shape[1]-1)*2
 #     hop = fftsize / overlap
-#     
-#     # w = scipy.hanning(fftsize+1)[:-1]
-#     w = spectrum.window_poisson_hanning(fftsize+1, alpha=2)[:-1]
-#     
+#     w = scipy.hanning(fftsize+1)[:-1]
 #     x = scipy.zeros(X.shape[0]*hop)
 #     wsum = scipy.zeros(X.shape[0]*hop) 
 #     for n,i in enumerate(range(0, len(x)-fftsize, hop)): 
@@ -109,13 +110,13 @@ def plot_stft(x, interpolation='bicubic'):
     # Use 'none' interpolation for a sharp plot. 
     plt.figure(figsize=(11, 4))
     sss = stft(np.array(x), window_size, overlap)
-    complex_norm = np.sqrt(np.absolute(sss)).transpose()[::-1]
-    plt.imshow(complex_norm, aspect='auto', interpolation=interpolation, cmap=plt.cm.hot)
+    complex_norm_tape = np.absolute(sss).transpose()[::-1]
+    plt.imshow(complex_norm_tape, aspect='auto', interpolation=interpolation, cmap=plt.cm.hot)
     # plt.yscale('log')
     plt.show()
 
 
-window_size = 92  # a.k.a. fftsize
+window_size = 50  # a.k.a. fftsize
 overlap = window_size  # This takes a maximal overlap
 
 
@@ -178,5 +179,5 @@ https://www.youtube.com/playlist?list=PLlp-GWNOd6m6gSz0wIcpvl4ixSlS-HEmr
     [NbConvertApp] Making directory Filtering_files
     [NbConvertApp] Making directory Filtering_files
     [NbConvertApp] Making directory Filtering_files
-    [NbConvertApp] Writing 5425 bytes to Filtering.md
+    [NbConvertApp] Writing 5325 bytes to Filtering.md
 

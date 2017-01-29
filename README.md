@@ -1,7 +1,9 @@
 
-# Filtering signal with a butterworth low-pass filter and plotting the STFT of it with a Hann-Poisson window
+# Filtering signal with a butterworth low-pass filter and plotting the STFT of it with a Hanning window and then the Laplace transform. 
 
-Let's start by generating data. Let's assume that we have a sampling rate of 50 Hz over 10 seconds.
+## Let's start by generating data. 
+
+Assuming we have a sampling rate of 50 Hz over 10 seconds:
 
 
 ```python
@@ -66,6 +68,9 @@ plt.figure(figsize=(11, 9))
 plt.plot(x, color='red', label="Original signal, {} samples".format(signal_lenght))
 plt.plot(y, color='blue', label="Filtered low-pass with cutoff frequency of {} Hz".format(cutoff_frequency))
 plt.plot(diff, color='gray', label="What has been removed")
+plt.title("Signal and its filtering")
+plt.xlabel('Time (1/50th sec. per tick)')
+plt.ylabel('Amplitude')
 plt.legend()
 plt.show()
 
@@ -106,12 +111,16 @@ def stft(x, fftsize=1024, overlap=4):
 #     x[pos] /= wsum[pos]
 #     return x
 
-def plot_stft(x, interpolation='bicubic'):
+def plot_stft(x, title, interpolation='bicubic'):
     # Use 'none' interpolation for a sharp plot. 
     plt.figure(figsize=(11, 4))
     sss = stft(np.array(x), window_size, overlap)
-    complex_norm_tape = np.absolute(sss).transpose()[::-1]
+    complex_norm_tape = np.absolute(sss).transpose()
     plt.imshow(complex_norm_tape, aspect='auto', interpolation=interpolation, cmap=plt.cm.hot)
+    plt.title(title)
+    plt.xlabel('Time (1/50th sec. per tick)')
+    plt.ylabel('Frequency (Hz)')
+    plt.gca().invert_yaxis()
     # plt.yscale('log')
     plt.show()
 
@@ -122,41 +131,128 @@ overlap = window_size  # This takes a maximal overlap
 
 # Plots in the STFT time-frequency domain: 
 
-print "x, original:"
-plot_stft(x)
-
-print "y, which is x filtered out:"
-plot_stft(y)
-
-print "Difference (notice changes in color due to plt's rescaling):"
-plot_stft(diff)
+plot_stft(x, "Original signal")
+plot_stft(y, "Filtered signal")
+plot_stft(diff, "Difference (notice changes in color due to plt's rescaling)")
 
 ```
 
-    x, original:
+
+![png](Filtering_files/Filtering_5_0.png)
 
 
 
 ![png](Filtering_files/Filtering_5_1.png)
 
 
-    y, which is x filtered out:
+
+![png](Filtering_files/Filtering_5_2.png)
+
+
+## Now, let's plot the Laplace transform. 
+
+To proceed, we will inspire ourselves of the already existing `np.fft.rfft` function for the imaginary part of the transform, but preprocessing multiple signals with pre-multiplied normalized exponentials for the real part of the exponential. 
+
+
+```python
+
+def laplace_transform(x, real_sigma_interval=np.arange(-1, 1 + 0.001, 0.001)):
+    # Returns the Laplace transform where the first axis is the real range and second axis the imaginary range. 
+    # Complex numbers are returned. 
+    
+    x = np.array(x)[::-1]  # The transform is from last timestep to first, so "x" is reversed
+    
+    d = []
+    for sigma in real_sigma_interval:
+        exp = np.exp( sigma*np.array(range(len(x))) )
+        exp /= np.sum(exp)
+        exponentiated_signal = exp * x
+        # print (max(exponentiated_signal), min(exponentiated_signal))
+        d.append(exponentiated_signal[::-1])  # re-reverse for straight signal
+    
+    # Now apply the imaginary part and "integrate" (sum)
+    return np.array([np.fft.rfft(k) for k in d])
+
+
+l = laplace_transform(x).transpose()
+
+norm_surface = np.absolute(l)
+angle_surface = np.angle(l)
+
+# Plotting the transform: 
+
+plt.figure(figsize=(11, 9))
+plt.title("Norm of Laplace transform")
+plt.imshow(norm_surface, aspect='auto', interpolation='none', cmap=plt.cm.rainbow)
+plt.ylabel('Imaginary: Frequency (Hz)')
+plt.xlabel('Real (exponential multiplier)')
+plt.xticks([0, 500, 1000, 1500, 2000], [-1, -0.5, 0.0, 0.5, 1.0])
+plt.gca().invert_yaxis()
+plt.colorbar()
+
+plt.figure(figsize=(11, 9))
+plt.title("Phase of Laplace transform")
+plt.imshow(angle_surface, aspect='auto', interpolation='none', cmap=plt.cm.hsv)
+plt.ylabel('Imaginary (Frequency, Hz)')
+plt.xlabel('Real (exponential multiplier)')
+plt.xticks([0, 500, 1000, 1500, 2000], [-1, -0.5, 0.0, 0.5, 1.0])
+plt.gca().invert_yaxis()
+plt.colorbar()
+plt.show()
+
+plt.figure(figsize=(11, 9))
+plt.title("Laplace transform, stacked phase and norm")
+plt.imshow(angle_surface, aspect='auto', interpolation='none', cmap=plt.cm.hsv)
+plt.ylabel('Imaginary: Frequency (Hz)')
+plt.xlabel('Real (exponential multiplier)')
+plt.xticks([0, 500, 1000, 1500, 2000], [-1, -0.5, 0.0, 0.5, 1.0])
+plt.colorbar()
+plt.gca().invert_yaxis()
+# Rather than a simple alpha channel option, I would have preferred a better transfer mode such as "multiply". 
+plt.imshow(norm_surface, aspect='auto', interpolation='none', cmap=plt.cm.gray, alpha=0.9)
+plt.ylabel('Imaginary: Frequency (Hz)')
+plt.xlabel('Real (exponential multiplier)')
+plt.xticks([0, 500, 1000, 1500, 2000], [-1, -0.5, 0.0, 0.5, 1.0])
+plt.gca().invert_yaxis()
+plt.colorbar()
+plt.show()
+
+plt.figure(figsize=(11, 9))
+plt.title("Log inverse norm of Laplace transform")
+plt.imshow(-np.log(norm_surface), aspect='auto', interpolation='none', cmap=plt.cm.summer)
+plt.ylabel('Imaginary: Frequency (Hz)')
+plt.xlabel('Real (exponential multiplier)')
+plt.xticks([0, 500, 1000, 1500, 2000], [-1, -0.5, 0.0, 0.5, 1.0])
+plt.gca().invert_yaxis()
+plt.colorbar()
+```
+
+
+![png](Filtering_files/Filtering_7_0.png)
 
 
 
-![png](Filtering_files/Filtering_5_3.png)
-
-
-    Difference (notice changes in color due to plt's rescaling):
+![png](Filtering_files/Filtering_7_1.png)
 
 
 
-![png](Filtering_files/Filtering_5_5.png)
+![png](Filtering_files/Filtering_7_2.png)
+
+
+
+
+
+    <matplotlib.colorbar.Colorbar instance at 0x7ff3f24347e8>
+
+
+
+
+![png](Filtering_files/Filtering_7_4.png)
 
 
 ## Other interesting stuff
 
-If you want to know more about STFTs, FFTs and related signal processing, you may want to watch those videos I watched to understand the matter:
+If you want to know more about STFTs, FFTs, Laplace transforms and related signal processing stuff, you may want to watch those videos I gathered to understand the matter:
 
 https://www.youtube.com/playlist?list=PLlp-GWNOd6m6gSz0wIcpvl4ixSlS-HEmr
 
@@ -179,5 +275,9 @@ https://www.youtube.com/playlist?list=PLlp-GWNOd6m6gSz0wIcpvl4ixSlS-HEmr
     [NbConvertApp] Making directory Filtering_files
     [NbConvertApp] Making directory Filtering_files
     [NbConvertApp] Making directory Filtering_files
-    [NbConvertApp] Writing 5325 bytes to Filtering.md
+    [NbConvertApp] Making directory Filtering_files
+    [NbConvertApp] Making directory Filtering_files
+    [NbConvertApp] Making directory Filtering_files
+    [NbConvertApp] Making directory Filtering_files
+    [NbConvertApp] Writing 8768 bytes to Filtering.md
 

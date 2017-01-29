@@ -225,6 +225,7 @@ plt.xlabel('Real (exponential multiplier)')
 plt.xticks([0, 500, 1000, 1500, 2000], [-1, -0.5, 0.0, 0.5, 1.0])
 plt.gca().invert_yaxis()
 plt.colorbar()
+plt.show()
 ```
 
 
@@ -240,14 +241,7 @@ plt.colorbar()
 
 
 
-
-
-    <matplotlib.colorbar.Colorbar instance at 0x7ff3f24347e8>
-
-
-
-
-![png](Filtering_files/Filtering_7_4.png)
+![png](Filtering_files/Filtering_7_3.png)
 
 
 ## Other interesting stuff
@@ -279,5 +273,5 @@ https://www.youtube.com/playlist?list=PLlp-GWNOd6m6gSz0wIcpvl4ixSlS-HEmr
     [NbConvertApp] Making directory Filtering_files
     [NbConvertApp] Making directory Filtering_files
     [NbConvertApp] Making directory Filtering_files
-    [NbConvertApp] Writing 8768 bytes to Filtering.md
+    [NbConvertApp] Writing 8867 bytes to Filtering.md
 
